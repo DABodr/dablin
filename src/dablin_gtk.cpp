@@ -338,6 +338,56 @@ int DABlinGTK::ComboServicesSlotCompare(const Gtk::TreeModel::iterator& a, const
 }
 
 void DABlinGTK::InitWidgets() {
+
+void DABlinGTK::on_combo_eti_source_changed() {
+	std::string selected_source = combo_eti_source.get_active_text();
+	if (selected_source == "eti-cmdline") {
+		options.dab_live_source_binary = "eti-cmdline";
+	} else {
+		options.dab_live_source_binary = "dab2eti";
+	}
+
+void DABlinGTK::on_entry_channel_changed() {
+	std::string channel_value = entry_channel.get_text();
+	options.initial_channel = channel_value;
+}
+
+void DABlinGTK::on_entry_gain_changed() {
+	std::string gain_value = entry_gain.get_text();
+	options.gain = strtol(gain_value.c_str(), nullptr, 0);
+}
+
+}
+
+	// ComboBox for selecting ETI source
+	Gtk::ComboBoxText combo_eti_source;
+	combo_eti_source.append("dab2eti");
+	combo_eti_source.append("eti-cmdline");
+	combo_eti_source.set_active_text("dab2eti"); // default value
+	combo_eti_source.signal_changed().connect(sigc::mem_fun(*this, &DABlinGTK::on_combo_eti_source_changed));
+	frame_eti_source.set_label("ETI Source");
+	frame_eti_source.add(combo_eti_source);
+	main_box.pack_start(frame_eti_source, Gtk::PACK_SHRINK);
+
+	// Entries for eti-cmdline configuration
+	Gtk::Entry entry_channel;
+	Gtk::Entry entry_gain;
+	frame_channel.set_label("Channel (-C)");
+	frame_channel.add(entry_channel);
+	main_box.pack_start(frame_channel, Gtk::PACK_SHRINK);
+
+	frame_gain.set_label("Gain (-G)");
+	frame_gain.add(entry_gain);
+	main_box.pack_start(frame_gain, Gtk::PACK_SHRINK);
+
+	entry_channel.set_text("11D"); // default channel
+
+	// Connect entry changes to handlers
+	entry_channel.signal_changed().connect(sigc::mem_fun(*this, &DABlinGTK::on_entry_channel_changed));
+	entry_gain.signal_changed().connect(sigc::mem_fun(*this, &DABlinGTK::on_entry_gain_changed));
+
+	entry_gain.set_text("30"); // default gain
+
 	this->signal_delete_event().connect(sigc::mem_fun(*this, &DABlinGTK::on_window_delete_event));
 
 	// init widgets

@@ -18,80 +18,80 @@
 
 #include "eti_source.h"
 
-
 // --- DABLiveETISource -----------------------------------------------------------------
 const std::string DABLiveETISource::TYPE_DAB2ETI = "dab2eti";
 const std::string DABLiveETISource::TYPE_ETI_CMDLINE = "eti-cmdline";
-const std::string DABLiveETISource::TYPE_ETI_CMDLINE = "eti-cmdline";
 
 DABLiveETISource::DABLiveETISource(std::string binary, DAB_LIVE_SOURCE_CHANNEL channel, EnsembleSourceObserver *observer, std::string source_name) : ETISource("", observer) {
-	this->channel = channel;
-	this->binary = binary;
-	this->source_name = source_name;
+    this->channel = channel;
+    this->binary = binary;
+    this->source_name = source_name;
 
-	// it doesn't matter whether there is a prefixed path or not
-	binary_name = binary.substr(binary.find_last_of('/') + 1);
-	binary_name = binary_name.substr(0, binary_name.find_first_of(' '));
+    // it doesn't matter whether there is a prefixed path or not
+    binary_name = binary.substr(binary.find_last_of('/') + 1);
+    binary_name = binary_name.substr(0, binary_name.find_first_of(' '));
 }
 
 void DABLiveETISource::Init() {
-	std::string cmdline;
-	if (binary_name == TYPE_ETI_CMDLINE) {
-		cmdline = binary + " -C " + channel.block + " -G " + channel.GainToString();
-	} else {
-		cmdline = binary + " " + GetParams();
-	}
-	input_file = popen(cmdline.c_str(), "r");
-	if (!input_file) {
-		perror("DABLiveETISource: error starting DAB live source");
-	}
+    std::string cmdline;
+    if (binary_name == TYPE_ETI_CMDLINE) {
+        cmdline = binary + " -C " + channel.block + " -G " + channel.GainToString();
+    } else {
+        cmdline = binary + " " + GetParams();
+    }
+    input_file = popen(cmdline.c_str(), "r");
+    if (!input_file) {
+        perror("DABLiveETISource: error starting DAB live source");
+    }
+}
 
 void DABLiveETISource::PrintSource() {
-	fprintf(stderr, "DABLiveETISource: playing %s from channel %s (%u kHz) via %s (gain: %s)\n", format_name.c_str(), channel.block.c_str(), channel.freq, source_name.c_str(), channel.GainToString().c_str());
+    fprintf(stderr, "DABLiveETISource: playing %s from channel %s (%u kHz) via %s (gain: %s)\n", format_name.c_str(), channel.block.c_str(), channel.freq, source_name.c_str(), channel.GainToString().c_str());
 }
 
 DABLiveETISource::~DABLiveETISource() {
-	// kill source, if not yet terminated
-	if(!feof(input_file)) {
-		// TODO: replace bad style temporary solution (here possible, because dab2eti allows only one concurrent session)
-		std::string cmd_killall = "killall " + binary_name;
-		int result = system(cmd_killall.c_str());
-		if(result != 0)
-			fprintf(stderr, "DABLiveETISource: error killing %s\n", source_name.c_str());
-	}
+    // kill source, if not yet terminated
+    if (!feof(input_file)) {
+        // TODO: replace bad style temporary solution (here possible, because dab2eti allows only one concurrent session)
+        std::string cmd_killall = "killall " + binary_name;
+        int result = system(cmd_killall.c_str());
+        if (result != 0) {
+            fprintf(stderr, "DABLiveETISource: error killing %s\n", source_name.c_str());
+        }
+    }
 
-	pclose(input_file);
-	input_file = nullptr;
+    pclose(input_file);
+    input_file = nullptr;
 }
-
 
 // --- DAB2ETIETISource -----------------------------------------------------------------
 std::string DAB2ETIETISource::GetParams() {
-	std::string result = std::to_string(channel.freq * 1000);
-	switch(channel.gain) {
-	case DAB_LIVE_SOURCE_CHANNEL::auto_gain:
-	case DAB_LIVE_SOURCE_CHANNEL::default_gain:
-		// here: default = auto
-		break;
-	default:
-		result += " " + std::to_string(channel.gain);
-	}
-	return result;
+    std::string result = std::to_string(channel.freq * 1000);
+    switch (channel.gain) {
+        case DAB_LIVE_SOURCE_CHANNEL::auto_gain:
+        case DAB_LIVE_SOURCE_CHANNEL::default_gain:
+            // here: default = auto
+            break;
+        default:
+            result += " " + std::to_string(channel.gain);
+    }
+    return result;
 }
-
 
 // --- EtiCmdlineETISource -----------------------------------------------------------------
 std::string EtiCmdlineETISource::GetParams() {
-	std::string cmdline = "-C " + channel.block + " -S -B " + (channel.freq < 1000000 ? "BAND_III" : "L_BAND");
-	switch(channel.gain) {
-	case DAB_LIVE_SOURCE_CHANNEL::auto_gain:
-		cmdline += " -Q";
-		break;
-	case DAB_LIVE_SOURCE_CHANNEL::default_gain:
-		// no parameter
-		break;
-	default:
-		cmdline += " -G " + std::to_string(channel.gain);
-	}
-	return cmdline;
+    std::string cmdline = "-C " + channel.block + " -S -B " + (channel.freq < 1000000 ? "BAND_III" : "L_BAND");
+    switch (channel.gain) {
+        case DAB_LIVE_SOURCE_CHANNEL::auto_gain:
+            cmdline += " -Q";
+            break;
+        case DAB_LIVE_SOURCE_CHANNEL::default_gain:
+            // no parameter
+            break;
+        default:
+            cmdline += " -G " + std::to_string(channel.gain);
+    }
+    return cmdline;
+}
+
 }

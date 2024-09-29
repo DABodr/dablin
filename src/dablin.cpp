@@ -32,7 +32,7 @@ static void usage(const char* exe) {
 	fprintf(stderr, "Usage: %s [OPTIONS] [file]\n", exe);
 	fprintf(stderr, "  -h            Show this help\n"
 					"  -f <format>   Source format: \"%s\" (default), \"%s\"\n"
-					"  -d <binary>   Use DAB live source (using the mentioned binary)\n"
+					"  -D <type>     DAB live source type: \"dab2eti\" (default), \"eti-cmdline\", \"eti-source\"\n"
 					"  -D <type>     DAB live source type: \"%s\" (default), \"%s\"\n"
 					"  -c <ch>       Channel to be played (requires DAB live source)\n"
 					"  -l <label>    Label of the service to be played\n"
@@ -58,6 +58,34 @@ static void usage(const char* exe) {
 
 
 int main(int argc, char **argv) {
+int useEtiCmdline = 0;
+
+// Integrate GTK options for eti-cmdline
+if (useEtiCmdline) {
+	std::string cmdlineOptions = "-C " + options.initial_channel + " -G " + std::to_string(options.gain);
+	DABLiveETISource liveSource(binary, channel, nullptr, "eti-cmdline");
+	liveSource.Init();
+}
+
+
+// Command-line argument parsing
+for (int i = 1; i < argc; ++i) {
+	if (strcmp(argv[i], "-d") == 0 && i + 1 < argc) {
+		if (strcmp(argv[i + 1], "eti-cmdline") == 0) {
+			useEtiCmdline = 1;
+			binary = "eti-cmdline";
+		}
+		i++;
+	}
+	// Other argument parsing here
+}
+
+// If eti-cmdline is selected, launch as a live source
+if (useEtiCmdline) {
+	std::string cmdlineOptions = "-C " + channel + " -G " + gain;
+	DABLiveETISource liveSource(binary, channel, nullptr, "eti-cmdline");
+	liveSource.Init();
+}
 	// handle signals
 	if(signal(SIGINT, break_handler) == SIG_ERR) {
 		perror("DABlin: error while setting SIGINT handler");

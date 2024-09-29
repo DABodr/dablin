@@ -22,6 +22,7 @@
 // --- DABLiveETISource -----------------------------------------------------------------
 const std::string DABLiveETISource::TYPE_DAB2ETI = "dab2eti";
 const std::string DABLiveETISource::TYPE_ETI_CMDLINE = "eti-cmdline";
+const std::string DABLiveETISource::TYPE_ETI_CMDLINE = "eti-cmdline";
 
 DABLiveETISource::DABLiveETISource(std::string binary, DAB_LIVE_SOURCE_CHANNEL channel, EnsembleSourceObserver *observer, std::string source_name) : ETISource("", observer) {
 	this->channel = channel;
@@ -34,11 +35,16 @@ DABLiveETISource::DABLiveETISource(std::string binary, DAB_LIVE_SOURCE_CHANNEL c
 }
 
 void DABLiveETISource::Init() {
-	std::string cmdline = binary + " " + GetParams();
+	std::string cmdline;
+	if (binary_name == TYPE_ETI_CMDLINE) {
+		cmdline = binary + " -C " + channel.block + " -G " + channel.GainToString();
+	} else {
+		cmdline = binary + " " + GetParams();
+	}
 	input_file = popen(cmdline.c_str(), "r");
-	if(!input_file)
+	if (!input_file) {
 		perror("DABLiveETISource: error starting DAB live source");
-}
+	}
 
 void DABLiveETISource::PrintSource() {
 	fprintf(stderr, "DABLiveETISource: playing %s from channel %s (%u kHz) via %s (gain: %s)\n", format_name.c_str(), channel.block.c_str(), channel.freq, source_name.c_str(), channel.GainToString().c_str());
